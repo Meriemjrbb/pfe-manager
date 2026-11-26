@@ -1,0 +1,19 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f4f6fa; color: #1c2430; }
+.layout { display: flex; min-height: 100vh; }
+nav { width: 210px; background: #1f3a5f; padding: 1rem; display: flex; flex-direction: column; gap: .4rem; }
+nav h1 { color: #fff; font-size: 1.2rem; margin: 0 0 1rem; }
+nav a { color: #cfd9e8; text-decoration: none; padding: .5rem .7rem; border-radius: 6px; }
+nav a.active { background: #2f5a92; color: #fff; }
+main { flex: 1; padding: 1.5rem; max-width: 1100px; }
+.card { background: #fff; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 1px 3px #0001; }
+form.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .7rem; }
+label { display: flex; flex-direction: column; font-size: .8rem; gap: .2rem; }
+input, select, textarea { padding: .45rem; border: 1px solid #c5cdd9; border-radius: 6px; font: inherit; }
+button { padding: .5rem .9rem; border: 0; border-radius: 6px; background: #2f5a92; color: #fff; cursor: pointer; }
+button.danger { background: #b3402f; }
+button.light { background: #e3e8f0; color: #1c2430; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #e3e8f0; font-size: .9rem; }
+.error { background: #fde8e5; color: #8a2a1c; padding: .6rem; border-radius: 6px; margin-bottom: .7rem; }
+.badge { background: #e3ecfa; border-radius: 12px; padding: .1rem .6rem; font-size: .8rem; }
