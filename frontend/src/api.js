@@ -1,7 +1,7 @@
 import { mockData } from "./mock";
 
 // true = données statiques (backend pas prêt) ; false = vrai backend sous /api
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // ---------- Vrai backend ----------
 async function realCall(url, opts = {}) {
