@@ -59,6 +59,7 @@ function mockCall(url, { method = "GET", body } = {}) {
       return fail({ errors: [`La salle ${data.room} est déjà occupée sur ce créneau.`] });
     const row = { ...data, id: nextId++ };
     if (resource === "professors") row.availabilities = [];
+    if (resource === "projects") { row.student_ids ??= []; row.progress ??= 0; row.status ??= "En cours"; }
     rows.push(row);
     return reply(row);
   }
