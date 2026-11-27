@@ -6,12 +6,16 @@ const ROLES = ["président", "examinateur", "encadrant"];
 const empty = { project_id: "", room: "", start: "", end: "", members: [{ professor_id: "", role: "président" }, { professor_id: "", role: "examinateur" }] };
 
 export default function Defenses() {
+  const [defenses, setDefenses] = useState([]);
   const [projects, setProjects] = useState([]);
   const [profs, setProfs] = useState([]);
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState([]);
 
-  const load = () => api.get("/defenses/ready-projects").then(setProjects);
+  const load = () => {
+    api.get("/defenses").then(setDefenses);
+    api.get("/defenses/ready-projects").then(setProjects);
+  };
   useEffect(() => { load(); api.get("/professors").then(setProfs); }, []);
 
   const setMember = (i, patch) =>
@@ -26,6 +30,8 @@ export default function Defenses() {
       setForm(empty); setErrors([]); load();
     } catch (err) { setErrors(err?.errors || ["Erreur"]); }
   };
+  const name = (id) => { const p = profs.find((x) => x.id === id); return p ? `${p.first_name} ${p.last_name}` : id; };
+  const title = (id) => projects.find((p) => p.id === id)?.title || `Projet #${id}`;
 
   return (
     <>
@@ -59,6 +65,21 @@ export default function Defenses() {
             <button type="submit">Planifier</button>
           </div>
         </form>
+      </div>
+      <div className="card">
+        <h3>Calendrier global</h3>
+        <table>
+          <thead><tr><th>Date</th><th>Salle</th><th>Projet</th><th>Jury</th><th /></tr></thead>
+          <tbody>
+            {defenses.map((d) => (
+              <tr key={d.id}>
+                <td>{d.start.replace("T", " ")} → {d.end.slice(11, 16)}</td><td>{d.room}</td><td>{title(d.project_id)}</td>
+                <td>{d.members.map((m) => `${name(m.professor_id)} (${m.role})`).join(", ")}</td>
+                <td><button className="danger" onClick={async () => { await api.del(`/defenses/${d.id}`); load(); }}>Supprimer</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </>
   );
