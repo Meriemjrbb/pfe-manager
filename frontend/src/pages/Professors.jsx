@@ -4,15 +4,15 @@ import { api } from "../api";
 
 export const meta = { path: "/professors", label: "Professeurs", order: 3 };
 
-function Availabilities() {
+function Availabilities({ refreshKey, onChange }) {
   const [profs, setProfs] = useState([]);
   const [pid, setPid] = useState("");
   const [slot, setSlot] = useState({ start: "", end: "" });
   const load = () => api.get("/professors").then(setProfs);
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [refreshKey]);
   const prof = profs.find((p) => String(p.id) === pid);
-  const add = async () => { await api.post(`/professors/${pid}/availabilities`, slot); load(); };
-  const del = async (id) => { await api.del(`/professors/availabilities/${id}`); load(); };
+  const add = async () => { await api.post(`/professors/${pid}/availabilities`, slot); onChange(); };
+  const del = async (id) => { await api.del(`/professors/availabilities/${id}`); onChange(); };
 
   return (
     <div className="card">
@@ -37,9 +37,11 @@ function Availabilities() {
 }
 
 export default function Professors() {
+  const [version, setVersion] = useState(0);
+  const bump = () => setVersion((v) => v + 1);
   return (
     <>
-      <Crud resource="professors" title="Professeurs"
+      <Crud resource="professors" title="Professeurs" refreshKey={version} onChange={bump}
         fields={[
           { name: "first_name", label: "Prénom" }, { name: "last_name", label: "Nom" },
           { name: "email", label: "Email", type: "email" }, { name: "specialty", label: "Spécialité" },
@@ -50,7 +52,7 @@ export default function Professors() {
           { label: "Spécialité", key: "specialty" }, { label: "Compétences", key: "skills" },
           { label: "Créneaux", render: (r) => r.availabilities.length },
         ]} />
-      <Availabilities />
+      <Availabilities refreshKey={version} onChange={bump} />
     </>
   );
 }

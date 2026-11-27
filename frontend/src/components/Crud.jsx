@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 
 /* Composant CRUD générique.
-   fields: [{ name, label, type?: "text"|"number"|"textarea", multi?, source?, optLabel? }] */
-export default function Crud({ resource, fields, columns, title }) {
+   fields: [{ name, label, type?: "text"|"number"|"textarea", multi?, source?, optLabel? }]
+   refreshKey (optionnel) : change de valeur => le tableau se recharge
+   onChange (optionnel)   : appelé après un ajout, une modification ou une suppression */
+export default function Crud({ resource, fields, columns, title, refreshKey, onChange }) {
   const [rows, setRows] = useState([]);
   const [sources, setSources] = useState({});
   const [form, setForm] = useState({});
@@ -11,8 +13,12 @@ export default function Crud({ resource, fields, columns, title }) {
   const [error, setError] = useState("");
 
   const load = () => api.get(`/${resource}`).then(setRows);
+
+  // Recharge le tableau au départ et chaque fois que refreshKey change
+  useEffect(() => { load(); }, [refreshKey]);
+
+  // Charge une seule fois les listes liées (ex. étudiants d'un projet)
   useEffect(() => {
-    load();
     fields.filter((f) => f.source).forEach((f) =>
       api.get(f.source).then((d) => setSources((s) => ({ ...s, [f.name]: d })))
     );
@@ -23,10 +29,10 @@ export default function Crud({ resource, fields, columns, title }) {
     e.preventDefault();
     try {
       editId ? await api.put(`/${resource}/${editId}`, form) : await api.post(`/${resource}`, form);
-      reset(); load();
+      reset(); load(); onChange?.();
     } catch (err) { setError(err?.errors?.join(" ") || err?.message || "Erreur"); }
   };
-  const remove = async (id) => { await api.del(`/${resource}/${id}`); load(); };
+  const remove = async (id) => { await api.del(`/${resource}/${id}`); load(); onChange?.(); };
 
   const input = (f) => {
     const v = form[f.name] ?? (f.multi ? [] : "");
