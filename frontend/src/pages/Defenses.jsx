@@ -8,6 +8,7 @@ const empty = { project_id: "", room: "", start: "", end: "", members: [{ profes
 export default function Defenses() {
   const [defenses, setDefenses] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [all, setAll] = useState([]); // CHANGEMENT 1 : tous les projets (pour les titres)
   const [profs, setProfs] = useState([]);
   const [form, setForm] = useState(empty);
   const [errors, setErrors] = useState([]);
@@ -15,6 +16,7 @@ export default function Defenses() {
   const load = () => {
     api.get("/defenses").then(setDefenses);
     api.get("/defenses/ready-projects").then(setProjects);
+    api.get("/projects").then(setAll); // CHANGEMENT 2 : charger tous les projets
   };
   useEffect(() => { load(); api.get("/professors").then(setProfs); }, []);
 
@@ -31,7 +33,7 @@ export default function Defenses() {
     } catch (err) { setErrors(err?.errors || ["Erreur"]); }
   };
   const name = (id) => { const p = profs.find((x) => x.id === id); return p ? `${p.first_name} ${p.last_name}` : id; };
-  const title = (id) => projects.find((p) => p.id === id)?.title || `Projet #${id}`;
+  const title = (id) => all.find((p) => p.id === id)?.title || `Projet #${id}`; // CHANGEMENT 3 : all au lieu de projects
 
   return (
     <>
