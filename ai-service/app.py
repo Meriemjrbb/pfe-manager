@@ -58,6 +58,44 @@ def call_llm(payload):
     return result
 
 
+def tokens(text):
+    return set(re.findall(r"\w{3,}", str(text or "").lower()))
+
+
+def heuristic(project, professors):
+    need = tokens(" ".join(
+        str(project.get(field) or "")
+        for field in ("title", "description", "technologies")
+    ))
+    ranked = []
+
+    for professor in professors:
+        have = tokens(
+            f"{professor.get('specialty', '')} {professor.get('skills', '')}"
+        )
+        common = need & have
+        score = round(100 * len(common) / max(len(have), 1))
+        ranked.append({
+            "professor_id": professor["id"],
+            "score": score,
+            "reason": "Compétences communes : "
+            + (", ".join(sorted(common)) or "aucune"),
+        })
+
+    ranked.sort(key=lambda recommendation: -recommendation["score"])
+    professor_ids = [item["professor_id"] for item in ranked]
+
+    return {
+        "required_skills": sorted(need)[:10],
+        "recommendations": ranked,
+        "jury": {
+            "president": professor_ids[0] if len(professor_ids) > 0 else None,
+            "examiner": professor_ids[1] if len(professor_ids) > 1 else None,
+            "supervisor": professor_ids[2] if len(professor_ids) > 2 else None,
+        },
+    }
+
+
 @app.post("/recommend")
 def recommend():
     payload = request.get_json(silent=True)
@@ -65,20 +103,25 @@ def recommend():
         not isinstance(payload, dict)
         or not isinstance(payload.get("project"), dict)
         or not isinstance(payload.get("professors"), list)
+        or any(
+            not isinstance(professor, dict) or professor.get("id") is None
+            for professor in payload.get("professors", [])
+        )
     ):
         return jsonify({"error": "Le projet et la liste des professeurs sont requis."}), 400
 
-    if not API_KEY:
-        return jsonify({"error": "LLM_API_KEY n'est pas configurée."}), 503
+    if API_KEY:
+        try:
+            result = call_llm(payload)
+        except (requests.RequestException, ValueError) as error:
+            app.logger.warning("Échec de l'appel LLM, repli heuristique : %s", error)
+        else:
+            return jsonify({**result, "source": "llm"})
 
-    try:
-        result = call_llm(payload)
-    except (requests.RequestException, ValueError) as error:
-        app.logger.warning("Échec de l'appel LLM : %s", error)
-        return jsonify({"error": "Le service LLM n'a pas pu traiter la demande."}), 502
-
-    return jsonify({**result, "source": "llm"})
-
+    return jsonify({
+        **heuristic(payload["project"], payload["professors"]),
+        "source": "fallback",
+    })
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
