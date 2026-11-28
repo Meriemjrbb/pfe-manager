@@ -4,11 +4,12 @@ terraform {
 
 resource "terraform_data" "virtualbox_vm" {
   triggers_replace = {
-    ubuntu_box = var.ubuntu_box
-    cpu_count  = var.cpu_count
-    memory_mb  = var.memory_mb
-    vm_ip      = var.vm_ip
-    public_key = var.public_key
+    ubuntu_box         = var.ubuntu_box
+    cpu_count          = var.cpu_count
+    memory_mb          = var.memory_mb
+    vm_ip              = var.vm_ip
+    public_key         = var.public_key
+    vagrantfile_sha256 = filesha256("${path.module}/Vagrantfile")
   }
 
   provisioner "local-exec" {

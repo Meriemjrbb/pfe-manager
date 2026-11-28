@@ -23,7 +23,7 @@ variable "memory_mb" {
 variable "ubuntu_box" {
   type        = string
   description = "Box Vagrant Ubuntu utilisée par VirtualBox"
-  default     = "ubuntu/noble64"
+  default     = "bento/ubuntu-24.04"
 
   validation {
     condition     = length(trimspace(var.ubuntu_box)) > 0
@@ -34,7 +34,7 @@ variable "ubuntu_box" {
 variable "vm_ip" {
   type        = string
   description = "Adresse IPv4 fixe de l'interface host-only de la VM"
-  default     = "192.168.56.10"
+  default     = "192.168.185.10"
 
   validation {
     condition     = can(cidrhost("${var.vm_ip}/32", 0))

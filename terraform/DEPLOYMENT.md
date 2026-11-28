@@ -14,14 +14,14 @@ Jenkins doit s'exécuter sur l'hôte VirtualBox, ou sur un agent qui peut utilis
 
 ## Réseau et VM
 
-Terraform utilise Vagrant avec le provider VirtualBox. La box Ubuntu `ubuntu/noble64` reçoit :
+Terraform utilise Vagrant avec le provider VirtualBox. La box Bento Ubuntu 24.04 `bento/ubuntu-24.04`, épinglée à la version `202510.26.0`, reçoit :
 
 - 2 processeurs virtuels ;
 - 4096 Mo de mémoire ;
 - une interface NAT pour l'accès sortant ;
-- une interface host-only à l'adresse fixe `192.168.56.10`.
+- une interface host-only à l'adresse fixe `192.168.185.10`.
 
-L'adresse doit être libre et appartenir au réseau host-only configuré dans VirtualBox. Depuis l'hôte, l'application est accessible à `http://192.168.56.10`. L'adresse n'est pas exposée sur le réseau public.
+L'adresse doit être libre et appartenir au réseau host-only configuré dans VirtualBox (par défaut `192.168.185.0/24` dans cet environnement, avec l'hôte en `192.168.185.1`). Depuis l'hôte, l'application est accessible à `http://192.168.185.10`. L'adresse n'est pas exposée sur le réseau public.
 
 Vagrant installe Docker et Compose v2 au premier démarrage. Le compte SSH invité est `vagrant`; la clé publique Terraform est ajoutée à ses clés autorisées.
 
