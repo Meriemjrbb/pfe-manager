@@ -1,74 +1,32 @@
 terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+  required_version = ">= 1.4.0"
+}
+
+resource "terraform_data" "virtualbox_vm" {
+  triggers_replace = {
+    ubuntu_box = var.ubuntu_box
+    cpu_count  = var.cpu_count
+    memory_mb  = var.memory_mb
+    vm_ip      = var.vm_ip
+    public_key = var.public_key
+  }
+
+  provisioner "local-exec" {
+    command     = "vagrant up --provider=virtualbox"
+    working_dir = path.module
+
+    environment = {
+      PFE_VM_BOX            = var.ubuntu_box
+      PFE_VM_CPUS           = tostring(var.cpu_count)
+      PFE_VM_MEMORY_MB      = tostring(var.memory_mb)
+      PFE_VM_IP             = var.vm_ip
+      PFE_VM_SSH_PUBLIC_KEY = var.public_key
     }
   }
-}
 
-provider "aws" {
-  region = var.region
-}
-
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"]
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
-  }
-}
-
-resource "aws_key_pair" "deployer" {
-  key_name   = "pfe-manager-key"
-  public_key = var.public_key
-}
-
-resource "aws_security_group" "web" {
-  name = "pfe-manager-sg"
-
-  ingress {
-    description = "SSH depuis Jenkins"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.ssh_allowed_cidr]
-  }
-
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_instance" "vm" {
-  ami                         = data.aws_ami.ubuntu.id
-  instance_type               = var.instance_type
-  key_name                    = aws_key_pair.deployer.key_name
-  vpc_security_group_ids      = [aws_security_group.web.id]
-  associate_public_ip_address = true
-
-  user_data = <<-EOT
-    #!/bin/bash
-    apt-get update -y
-    apt-get install -y docker.io docker-compose-v2
-    usermod -aG docker ubuntu
-    systemctl enable --now docker
-  EOT
-
-  tags = {
-    Name = "pfe-manager"
+  provisioner "local-exec" {
+    when        = destroy
+    command     = "vagrant destroy --force"
+    working_dir = path.module
   }
 }

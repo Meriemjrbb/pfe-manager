@@ -1,0 +1,31 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = ENV.fetch("PFE_VM_BOX", "ubuntu/noble64")
+  config.vm.box_check_update = false
+  config.vm.hostname = "pfe-manager"
+  config.vm.network "private_network", ip: ENV.fetch("PFE_VM_IP", "192.168.56.10")
+
+  config.vm.provider "virtualbox" do |virtualbox|
+    virtualbox.name = "pfe-manager"
+    virtualbox.cpus = Integer(ENV.fetch("PFE_VM_CPUS", "2"))
+    virtualbox.memory = Integer(ENV.fetch("PFE_VM_MEMORY_MB", "4096"))
+  end
+
+  config.vm.provision "shell",
+    env: { "PFE_VM_SSH_PUBLIC_KEY" => ENV.fetch("PFE_VM_SSH_PUBLIC_KEY", "") } do |shell|
+    shell.inline = <<-SHELL
+      set -eu
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y docker.io docker-compose-v2
+      systemctl enable --now docker
+      usermod -aG docker vagrant
+
+      install -d -m 700 -o vagrant -g vagrant /home/vagrant/.ssh
+      touch /home/vagrant/.ssh/authorized_keys
+      grep -qxF -- "$PFE_VM_SSH_PUBLIC_KEY" /home/vagrant/.ssh/authorized_keys || \
+        printf '%s\n' "$PFE_VM_SSH_PUBLIC_KEY" >> /home/vagrant/.ssh/authorized_keys
+      chown vagrant:vagrant /home/vagrant/.ssh/authorized_keys
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+    SHELL
+  end
+end
